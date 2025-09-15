@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Вивчення Чеських Слів</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(120deg, #84fab0, #8fd3f4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeIn 1s ease;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .card {
+      padding: 20px;
+      margin: 15px auto;
+      border-radius: 15px;
+      background: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      background: #0077ff;
+      color: white;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #005fd1;
+    }
+
+    input {
+      margin: 5px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🇨🇿 Чеські слова</h1>
+
+    <div id="word-box" class="card">Натисни "Отримати слово"</div>
+    
+    <button id="get-word">Отримати слово</button>
+    <button id="translate">Перекласти</button>
+
+    <div id="translation" class="card hidden"></div>
+
+    <h2>➕ Додати слово</h2>
+    <input type="text" id="new-word" placeholder="Слово (cz)">
+    <input type="text" id="new-translation" placeholder="Переклад (ua)">
+    <button id="add-word">Зберегти</button>
+  </div>
+
+  <script>
+    let words = [];
+    let currentWord = null;
+
+    // Завантаження слів з бекенду
+    fetch("http://localhost:5000/api/words")
+      .then(r => r.json())
+      .then(data => { words = data; });
+
+    document.getElementById("get-word").addEventListener("click", () => {
+      if (words.length === 0) {
+        document.getElementById("word-box").textContent = "Список пустий!";
+        return;
+      }
+      currentWord = words[Math.floor(Math.random() * words.length)];
+      document.getElementById("word-box").textContent = currentWord.word;
+      document.getElementById("translation").classList.add("hidden");
+    });
+
+    document.getElementById("translate").addEventListener("click", () => {
+      if (currentWord) {
+        document.getElementById("translation").textContent = currentWord.translation;
+        document.getElementById("translation").classList.remove("hidden");
+      }
+    });
+
+    document.getElementById("add-word").addEventListener("click", () => {
+      const word = document.getElementById("new-word").value;
+      const translation = document.getElementById("new-translation").value;
+      fetch("http://localhost:5000/api/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, translation })
+      })
+      .then(r => r.json())
+      .then(res => {
+        alert(res.message);
+        words.push({ word, translation });
+        document.getElementById("new-word").value = "";
+        document.getElementById("new-translation").value = "";
+      });
+    });
+  </script>
+</body>
+</html>
