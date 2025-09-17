@@ -1,139 +1,156 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Вивчення Чеських Слів</title>
+  <title>CZ-UA Trainer</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(120deg, #84fab0, #8fd3f4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
-
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.85);
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      animation: fadeIn 1s ease;
-    }
-
     h1 {
-      margin-bottom: 20px;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
     }
-
-    .card {
-      padding: 20px;
-      margin: 15px auto;
-      border-radius: 15px;
-      background: #fff;
-      font-size: 22px;
-      font-weight: 600;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      transition: transform 0.3s;
+    #word-container {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      animation: fadeIn 0.5s ease;
     }
-
-    .card:hover {
+    input {
+      padding: 10px;
+      font-size: 1rem;
+      border: none;
+      border-bottom: 2px solid #666;
+      background: transparent;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.3s;
+      text-align: center;
+    }
+    input:focus {
+      border-color: #3bc9ac;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background: #ffffff;
+      border: none;
+      border-radius: 5px;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: #ffffff;
       transform: scale(1.05);
     }
-
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 16px;
-      background: #0077ff;
-      color: white;
-      transition: 0.3s;
+    #feedback {
+      margin-top: 1rem;
+      font-size: 1.3rem;
+      min-height: 1.5rem;
     }
-
-    button:hover {
-      background: #005fd1;
+    .mistake {
+      background: #cc1414;
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 0 5px;
+      display: inline;
+      animation: shake 0.3s;
+      border: #000;
     }
-
-    input {
-      margin: 5px;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    .correct { color: #3eb95d; }
+    .wrong { color: #ffffff; }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      50% { transform: translateX(2px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
     }
-
-    .hidden {
-      display: none;
-    }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🇨🇿 Чеські слова</h1>
-
-    <div id="word-box" class="card">Натисни "Отримати слово"</div>
-    
-    <button id="get-word">Отримати слово</button>
-    <button id="translate">Перекласти</button>
-
-    <div id="translation" class="card hidden"></div>
-
-    <h2>➕ Додати слово</h2>
-    <input type="text" id="new-word" placeholder="Слово (cz)">
-    <input type="text" id="new-translation" placeholder="Переклад (ua)">
-    <button id="add-word">Зберегти</button>
-  </div>
+  <h1>CZ → UA Trainer</h1>
+  <div id="word-container">Loading...</div>
+  <input type="text" id="answer" placeholder="Type translation...">
+  <button id="check">Check</button>
+  <div id="feedback"></div>
 
   <script>
-    let words = [];
+    const words = [
+      {cz: "škola", uk: "школа"},
+      {cz: "třída", uk: "клас"},
+      {cz: "muž", uk: "чоловік"},
+      {cz: "žena", uk: "жінка"},
+      {cz: "učitel", uk: "учитель"},
+      {cz: "učitelka", uk: "учителька"},
+      {cz: "student", uk: "студент"},
+      {cz: "studentka", uk: "студентка"},
+      {cz: "žák", uk: "учень"},
+      {cz: "žákyně", uk: "учениця"},
+      {cz: "stůl", uk: "стіл"},
+      {cz: "okno", uk: "вікно"},
+      {cz: "počítač", uk: "комп’ютер"},
+      {cz: "mapa", uk: "мапа"},
+      {cz: "batoh", uk: "рюкзак"},
+      {cz: "pero", uk: "ручка"},
+      {cz: "sešit", uk: "зошит"},
+      {cz: "kniha", uk: "книга"},
+      {cz: "nový", uk: "новий"},
+      {cz: "malý", uk: "маленький"}
+    ];
+
     let currentWord = null;
 
-    // Завантаження слів з бекенду
-    fetch("http://localhost:5000/api/words")
-      .then(r => r.json())
-      .then(data => { words = data; });
-
-    document.getElementById("get-word").addEventListener("click", () => {
-      if (words.length === 0) {
-        document.getElementById("word-box").textContent = "Список пустий!";
-        return;
-      }
+    function nextWord() {
       currentWord = words[Math.floor(Math.random() * words.length)];
-      document.getElementById("word-box").textContent = currentWord.word;
-      document.getElementById("translation").classList.add("hidden");
-    });
+      document.getElementById("word-container").textContent = currentWord.uk;
+      document.getElementById("answer").value = "";
+      document.getElementById("feedback").innerHTML = "";
+    }
 
-    document.getElementById("translate").addEventListener("click", () => {
-      if (currentWord) {
-        document.getElementById("translation").textContent = currentWord.translation;
-        document.getElementById("translation").classList.remove("hidden");
+    function highlightMistakes(userInput, correctWord) {
+      let result = "";
+      const maxLen = Math.max(userInput.length, correctWord.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (userInput[i] === correctWord[i]) {
+          result += correctWord[i] || "";
+        } else if (correctWord[i]) {
+          result += `<span class="mistake">${correctWord[i]}</span>`;
+        }
+      }
+      return result;
+    }
+
+    document.getElementById("check").addEventListener("click", () => {
+      const input = document.getElementById("answer").value.trim();
+      const feedback = document.getElementById("feedback");
+      if (input.toLowerCase() === currentWord.cz.toLowerCase()) {
+        feedback.innerHTML = "Correct!";
+        feedback.className = "correct";
+        setTimeout(nextWord, 1000);
+      } else {
+        feedback.innerHTML =   highlightMistakes(input, currentWord.cz);
+        feedback.className = "wrong";
       }
     });
 
-    document.getElementById("add-word").addEventListener("click", () => {
-      const word = document.getElementById("new-word").value;
-      const translation = document.getElementById("new-translation").value;
-      fetch("http://localhost:5000/api/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word, translation })
-      })
-      .then(r => r.json())
-      .then(res => {
-        alert(res.message);
-        words.push({ word, translation });
-        document.getElementById("new-word").value = "";
-        document.getElementById("new-translation").value = "";
-      });
-    });
+    nextWord();
   </script>
 </body>
 </html>

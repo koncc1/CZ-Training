@@ -8,14 +8,14 @@ CORS(app)
 
 WORDS_FILE = "words.json"
 
-# Завантаження списку слів
+
 def load_words():
     if os.path.exists(WORDS_FILE):
         with open(WORDS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
-# Збереження слів у файл
+
 def save_words(words):
     with open(WORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(words, f, ensure_ascii=False, indent=2)
